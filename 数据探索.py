@@ -10,12 +10,15 @@ Created on Tue Aug  6 09:51:13 2019
 无关特征删除
 数据类型转换
 缺失值处理
+
+
+
+
 @author: asus
 """
 #%%
 import pandas as pd
 import seaborn as sns
-import sklearn as 
 #%% 读取数据
 data = pd.read_excel("data.xlsx")
 #%% 打印数据信息
@@ -27,12 +30,14 @@ print (data.isnull().sum().sort_values(ascending = False))
 #暂时不丢弃,也不考虑直接填充。先考虑去除一些明显无用的列。
 # =============================================================================
 #查看对每一种属性包含的值
-n=1
-for name in list(data.columns):
-    print ("#" + str(n) + "-" + name +":")
-    n = n + 1
-    print (data[name].unique())
-    a = input()
+# =============================================================================
+# n=1
+# for name in list(data.columns):
+#     print ("#" + str(n) + "-" + name +":")
+#     n = n + 1
+#     print (data[name].unique())
+#     a = input()
+# =============================================================================
 
 #%% trade_no,bank_card_no,source,id_name是无效的数据可以剔除
 D_data = data
@@ -53,4 +58,25 @@ D_data['latest_query_day'].fillna(0,inplace = True)
 # reg_preference_for_trad 处理空值为"其他城市"
 #需要使用独热编码
 D_data['loans_latest_day'].fillna("其他城市",inplace = True)
+D_data.drop(['loans_latest_day'],axis = 1,inplace = True)
+#%% 随机森林
+y = D_data['status']
+x = D_data[D_data.loc[:,D_data.columns != 'status'].columns]
 #%%
+from sklearn.ensemble import RandomForestClassifier
+#%%
+forest_clf = RandomForestClassifier()
+forest_clf.fit(x,y)
+# 随即森林自带“feature_importances_”属性，可以计算出每个特征的重要性。
+features_weights = dict(zip(D_data.columns,forest_clf.feature_importances_))
+fearures_weights_sorted = sorted(features_weights.items(),key = lambda x:x[1],
+                                 reverse=True)
+#%% 降序排列，选择前15个
+for item in range(15):
+    print(features_weights_sorted[item][0],':',features_weights_sorted[item][1])
+
+
+
+
+
+
